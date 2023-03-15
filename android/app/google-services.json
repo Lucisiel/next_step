@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "604918292716",
+    "project_id": "next-step-df6ac",
+    "storage_bucket": "next-step-df6ac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604918292716:android:0fc3b83ab5fc35964e45c9",
+        "android_client_info": {
+          "package_name": "com.fredrickchai.next_step"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "604918292716-re1karma271kttkjeobcvdtr1nrijabg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA981UZByI5-PPKGrtiEZPGr5j574e-Bdw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "604918292716-re1karma271kttkjeobcvdtr1nrijabg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

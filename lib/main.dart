@@ -1,23 +1,23 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:sensors/sensors.dart';
-import 'login_page.dart';
-import 'pedometer_page.dart';
+import 'package:get/get.dart';
+import 'package:next_step/view/splash.view.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
-class MyApp extends StatelessWidget {
+  runApp(const App());
+}
+
+class App extends StatelessWidget {
+  const App({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Pedometer',
-      // Set halaman login sebagai halaman awal
-      initialRoute: '/',
-      routes: {
-        // Map route '/' ke widget LoginPage
-        '/': (context) => LoginPage(),
-        // Map route '/pedometer' ke widget PedometerPage
-        '/pedometer': (context) => PedometerPage(),
-      },
+    return const GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: SplashView(),
     );
   }
 }
