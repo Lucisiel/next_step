@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:next_step/utils/global.colors.dart';
+import 'package:next_step/utils/global.configs.dart';
 
 class ButtonGlobal extends StatelessWidget {
   const ButtonGlobal({super.key, required this.text, required this.onPress});
@@ -14,7 +14,7 @@ class ButtonGlobal extends StatelessWidget {
         alignment: Alignment.center,
         height: 55,
         decoration: BoxDecoration(
-          color: GlobalColors.mainColor,
+          color: GlobalConfigs.mainColor,
           borderRadius: BorderRadius.circular(50),
           boxShadow: [
             BoxShadow(

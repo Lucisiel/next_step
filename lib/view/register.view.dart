@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:next_step/utils/global.configs.dart';
+import 'package:next_step/view/form.view.dart';
+import 'package:next_step/view/login.view.dart';
+import 'package:next_step/view/widgets/bottomBar.global.dart';
 import 'package:next_step/view/widgets/button.global.dart';
 import 'package:next_step/view/widgets/text.form.global.dart';
-import 'login.view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'pedometer.view.dart';
 
 class RegisterView extends StatelessWidget {
   RegisterView({super.key});
@@ -69,8 +70,12 @@ class RegisterView extends StatelessWidget {
           'step': 0,
           'totalStep': 0,
           'currentDate': date,
+          'weight': null,
+          'height': null,
+          'gender': null,
+          'birthday': null,
         });
-        Get.to(const PedometerView());
+        Get.to(const FormView());
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
@@ -85,7 +90,7 @@ class RegisterView extends StatelessWidget {
         );
       }
     } catch (e) {
-      print(e);
+      // print(e);
     }
   }
 
@@ -93,14 +98,15 @@ class RegisterView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: SafeArea(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(15.0),
+            padding: EdgeInsets.all(GlobalConfigs.paddingBody),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 50),
+                const SizedBox(height: 16),
                 Container(
                   alignment: Alignment.center,
                   child: Image.asset(
@@ -109,78 +115,33 @@ class RegisterView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   "Walk for health.",
                   style: TextStyle(
-                    color: Color(0xff6a6a6a),
-                    fontSize: 16,
+                    color: GlobalConfigs.textColor,
+                    fontSize: GlobalConfigs.textBodySize,
                   ),
                 ),
                 const SizedBox(height: 40),
                 Column(
                   children: [
-                    const SizedBox(
-                      height: 20,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Your name",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     TextFormGlobal(
                       controller: nameController,
-                      text: 'Example Name',
+                      text: 'Your name',
                       obscure: false,
-                      textInputType: TextInputType.emailAddress,
+                      textInputType: TextInputType.text,
                     ),
                     const SizedBox(height: 20),
-                    const SizedBox(
-                      height: 20,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Your email address",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     TextFormGlobal(
                       controller: emailController,
-                      text: 'example@example.com',
+                      text: 'Your email',
                       obscure: false,
                       textInputType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 20),
-                    const SizedBox(
-                      height: 20,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Your password",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     TextFormGlobal(
                       controller: passwordController,
-                      text: 'Password',
+                      text: 'Your password',
                       obscure: true,
                       textInputType: TextInputType.text,
                     ),
@@ -191,6 +152,13 @@ class RegisterView extends StatelessWidget {
                         register();
                       },
                     ),
+                    const SizedBox(height: 20),
+                    InkWell(
+                      onTap: () {
+                        Get.off(() => LoginView());
+                      },
+                      child: const Text('Already have an account? Login'),
+                    ),
                   ],
                 ),
               ],
@@ -198,22 +166,7 @@ class RegisterView extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 50,
-        color: Colors.white,
-        alignment: Alignment.center,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            InkWell(
-              onTap: () {
-                Get.to(LoginView());
-              },
-              child: const Text('Already have an account? Login'),
-            )
-          ],
-        ),
-      ),
+      bottomNavigationBar: const BottomBarGlobal(),
     );
   }
 }

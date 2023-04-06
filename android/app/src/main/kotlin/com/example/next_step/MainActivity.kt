@@ -1,4 +1,4 @@
-package com.fredrickchai.next_step
+package com.fredrickchai.NextStep
 
 import io.flutter.embedding.android.FlutterActivity
 

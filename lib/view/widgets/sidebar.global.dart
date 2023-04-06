@@ -1,11 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:next_step/utils/global.configs.dart';
+import 'package:next_step/view/browse.view.dart';
+import 'package:next_step/view/profile.view.dart';
+import 'package:next_step/view/journal.view.dart';
+import 'package:next_step/view/login.view.dart';
+import 'package:next_step/view/pedometer.view.dart';
 
-import '../login.view.dart';
-
-class SidebarGlobal extends StatelessWidget {
-  const SidebarGlobal({super.key});
+class SideBarGlobal extends StatelessWidget {
+  const SideBarGlobal({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +27,8 @@ class SidebarGlobal extends StatelessWidget {
   }
 
   Widget buildHeader(BuildContext context) => Container(
-          padding: EdgeInsets.only(
+      color: GlobalConfigs.mainColor,
+      padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top,
       ));
 
@@ -34,22 +39,34 @@ class SidebarGlobal extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.home_outlined),
               title: const Text('Home'),
-              onTap: () {},
+              onTap: () {
+                Navigator.pop(context);
+                Get.to(const PedometerView());
+              },
             ),
             ListTile(
               leading: const Icon(Icons.info_outlined),
               title: const Text('Journal'),
-              onTap: () {},
+              onTap: () {
+                Navigator.pop(context);
+                Get.to(const JournalView());
+              },
             ),
             ListTile(
               leading: const Icon(Icons.search_outlined),
               title: const Text('Browse'),
-              onTap: () {},
+              onTap: () {
+                Navigator.pop(context);
+                Get.to(const BrowseView());
+              },
             ),
             ListTile(
               leading: const Icon(Icons.person_outlined),
-              title: Text('Profile'),
-              onTap: () {},
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Get.to(const ProfileView());
+              },
             ),
             const Divider(
               color: Colors.black54,
@@ -70,7 +87,7 @@ class SidebarGlobal extends StatelessWidget {
                       TextButton(
                         onPressed: () async {
                           await FirebaseAuth.instance.signOut();
-                          Get.to(LoginView());
+                          Get.off(LoginView());
                         },
                         child: const Text('Log Out'),
                       ),

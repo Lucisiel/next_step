@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:next_step/utils/global.colors.dart';
+import 'package:next_step/utils/global.configs.dart';
+import 'package:next_step/view/form.view.dart';
 import 'package:next_step/view/widgets/button.global.dart';
-import 'package:next_step/view/widgets/sidebar.global.dart';
+import 'package:next_step/view/widgets/sideBar.global.dart';
 import 'package:sensors/sensors.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'login.view.dart';
+import 'package:next_step/functions/auth_service.dart';
 
 class PedometerView extends StatefulWidget {
   const PedometerView({Key? key}) : super(key: key);
@@ -34,11 +38,12 @@ class PedometerViewState extends State<PedometerView> {
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  late StreamSubscription<AccelerometerEvent> _accelerometerSubscription;
 
   @override
   void initState() {
     super.initState();
-    _validateUser();
+    validateCurrentUser();
 
     var initializationSettingsAndroid =
         const AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -46,7 +51,8 @@ class PedometerViewState extends State<PedometerView> {
         InitializationSettings(android: initializationSettingsAndroid);
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-    accelerometerEvents.listen((AccelerometerEvent event) {
+    _accelerometerSubscription =
+        accelerometerEvents.listen((AccelerometerEvent event) {
       setState(() {
         if (event.y > 11.0) {
           _stepsCount++;
@@ -61,50 +67,63 @@ class PedometerViewState extends State<PedometerView> {
     });
   }
 
-  void _validateUser() async {
-    final user = FirebaseAuth.instance.currentUser;
+  @override
+  void dispose() {
+    _accelerometerSubscription.cancel(); // Cancel the subscription here
+    super.dispose();
+  }
+
+  void validateCurrentUser() async {
+    User? user = await AuthService.validateUser();
     if (user != null) {
       final userData = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
       if (userData.exists) {
-        final currentDate =
-            DateTime.now().toLocal().toString().substring(0, 10);
-        final firebaseDate = userData.get('currentDate');
-        if (firebaseDate != currentDate) {
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .update({
-            'step': 0,
-            'currentDate': currentDate,
-          });
-          setState(() {
-            _stepsCount = 0;
-          });
+        if (userData.get('weight') == null ||
+            userData.get('height') == null ||
+            userData.get('gender') == null ||
+            userData.get('birthday') == null) {
+          Get.off(const FormView());
         } else {
+          final currentDate =
+              DateTime.now().toLocal().toString().substring(0, 10);
+          final firebaseDate = userData.get('currentDate');
+
+          if (firebaseDate != currentDate) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({
+              'step': 0,
+              'currentDate': currentDate,
+            });
+
+            setState(() {
+              _stepsCount = 0;
+            });
+          } else {
+            setState(() {
+              _stepsCount = userData.get('step');
+            });
+          }
           setState(() {
-            _stepsCount = userData.get('step');
+            _user = user;
+            _totalStepsCount = _totalStepsCount = userData.get('totalStep');
           });
+
+          // Calculate distance in kilometers
+          distanceInMeters = _stepsCount * averageStepLength;
+          distanceInKm = distanceInMeters / 1000;
+
+          // Calculate calories burned
+          caloriesBurned = _stepsCount * averageCaloriesBurnedPerStep;
         }
-        setState(() {
-          _user = user;
-          _totalStepsCount = userData.get('totalStep');
-        });
       }
     } else {
-      Future.delayed(Duration.zero, () {
-        _showAlert();
-      });
+      AuthService.showAlert();
     }
-
-    // Calculate distance in kilometers
-    distanceInMeters = _stepsCount * averageStepLength;
-    distanceInKm = distanceInMeters / 1000;
-
-    // Calculate calories burned
-    caloriesBurned = _stepsCount * averageCaloriesBurnedPerStep;
   }
 
   void _updateUserStepCount() async {
@@ -149,83 +168,72 @@ class PedometerViewState extends State<PedometerView> {
     caloriesBurned = _stepsCount * averageCaloriesBurnedPerStep;
   }
 
-  void _showAlert() {
-    Get.defaultDialog(
-      title: 'Login Required',
-      middleText: 'Please log in to access this page.',
-      actions: [
-        TextButton(
-          onPressed: () {
-            Get.to(LoginView());
-          },
-          child: const Text('OK'),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () => _onWillPop(context),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Home'),
-          backgroundColor: GlobalColors.mainColor,
-        ),
-        drawer: const SidebarGlobal(),
-        body: _user != null
-            ? SafeArea(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 50),
-                      SizedBox(
-                        width: 200,
-                        height: 200,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CircularProgressIndicator(
-                              value: _stepsCount / 3000,
-                              backgroundColor: Colors.grey[300],
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  GlobalColors.mainColor),
-                              strokeWidth: 8,
-                            ),
-                            Center(
-                              child: Text(
-                                _stepsCount.toString(),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: GlobalColors.mainColor,
+    return _user != null
+        ? WillPopScope(
+            onWillPop: () => _onWillPop(context),
+            child: Scaffold(
+              appBar: AppBar(
+                title: const Text('Home'),
+                backgroundColor: GlobalConfigs.mainColor,
+              ),
+              drawer: const SideBarGlobal(),
+              body: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: SafeArea(
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(GlobalConfigs.paddingBody),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CircularProgressIndicator(
+                                value: _stepsCount / 3000,
+                                backgroundColor: Colors.grey[300],
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    GlobalConfigs.mainColor),
+                                strokeWidth: 8,
+                              ),
+                              Center(
+                                child: Text(
+                                  _stepsCount.toString(),
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: GlobalConfigs.mainColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 50),
-                      ButtonGlobal(
-                          text: '$caloriesBurned kalori terbakar',
-                          onPress: () => {}),
-                      const SizedBox(height: 20),
-                      ButtonGlobal(
-                          text: '$distanceInMeters meters', onPress: () => {}),
-                      const SizedBox(height: 20),
-                      ButtonGlobal(
-                          text: '$distanceInKm kilometers', onPress: () => {}),
-                    ],
+                        const SizedBox(height: 50),
+                        ButtonGlobal(
+                            text: '$caloriesBurned kalori terbakar',
+                            onPress: () => {}),
+                        const SizedBox(height: 20),
+                        ButtonGlobal(
+                            text: '$distanceInMeters meters',
+                            onPress: () => {}),
+                        const SizedBox(height: 20),
+                        ButtonGlobal(
+                            text: '$distanceInKm kilometers',
+                            onPress: () => {}),
+                      ],
+                    ),
                   ),
                 ),
-              )
-            : const SizedBox.shrink(),
-      ),
-    );
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
   }
 
   Future<bool> _onWillPop(BuildContext context) async {
@@ -239,7 +247,7 @@ class PedometerViewState extends State<PedometerView> {
                 child: const Text('No'),
               ),
               TextButton(
-                onPressed: () => Get.back(result: true),
+                onPressed: () => SystemNavigator.pop(),
                 child: const Text('Yes'),
               ),
             ],
